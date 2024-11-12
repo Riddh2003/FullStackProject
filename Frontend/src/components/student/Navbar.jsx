@@ -9,7 +9,7 @@ const Navbar = ({
     onAddStudentClick
 }) => {
     return (
-        <div className="h-auto flex items-center justify-between bg-[#ff4848ec] p-3">
+        <div className="h-auto flex items-center justify-between bg-[#ff4848] p-3">
             <div className="pl-10 w-56">
                 <img src={RoyalLogo} alt="Logo" className="h-12 cursor-pointer" />
             </div>
@@ -22,6 +22,7 @@ const Navbar = ({
                         type="text"
                         placeholder="Search"
                         className="w-full p-2 text-gray-700 rounded-r-full focus:outline-none"
+                        onChange={(e)=>onSearch(e.target.value)}
                     />
                 </div>
                 {/* Dropdown for search results */}
@@ -34,20 +35,29 @@ const Navbar = ({
                                     className="p-2 hover:bg-gray-100"
                                     onClick={() => onStudentSelect(student.studentId)}
                                 >
-                                    {student.name} - {student.college}
+                                    {student.firstName} {student.lastName} - {student.college}
                                 </li>
                             ))}
                         </ul>
                     </div>
                 )}
             </div>
-            <div className="md:pr-10 ">
-                <button
-                    onClick={onAddStudentClick}
-                    className="text-md shadow-lg font-semibold bg-white text-[#ff4848] hover:bg-[#ffa4a4] hover:text-white p-2 rounded-full pl-7 pr-7 ease-in duration-200"
-                >
-                    Add Student
-                </button>
+            <div className="flex items-center justify-center ">
+                <div className="md:pr-10 ">
+                    <button
+                        onClick={onAddStudentClick}
+                        className="text-md shadow-lg font-semibold bg-white text-[#ff4848] hover:bg-[#ffa4a4] hover:text-white py-2 px-4 rounded-full ease-in duration-200"
+                    >
+                        Add Student
+                    </button>
+                </div>
+                <div className="md:pr-10 ">
+                    <button
+                        className="text-md shadow-lg font-semibold bg-white text-[#ff4848] hover:bg-[#ffa4a4] hover:text-white py-2 px-4 rounded-full ease-in duration-200"
+                    >
+                        Logout
+                    </button>
+                </div>
             </div>
         </div>
 

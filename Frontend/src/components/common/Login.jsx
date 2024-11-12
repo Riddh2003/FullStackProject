@@ -1,29 +1,167 @@
 import React, { useState } from 'react';
-import Signup from './SignUp'; // Adjust the path as necessary
+import TextField from "@mui/material/TextField";
+import { makeStyles } from "@mui/styles";
+import axios from "axios";
+import Message from "../common/Message.jsx";
+import { useNavigate } from "react-router-dom";
+
+const useStyles = makeStyles(() => ({
+    root: {
+        "& .MuiOutlinedInput-root": {
+            "&.Mui-focused fieldset": {
+                borderColor: "green",
+            },
+            fontFamily: "Metropolis, sans-serif",
+        },
+        "& .MuiInputLabel-root": {
+            "&.Mui-focused": {
+                color: '#ff4848'
+            },
+            fontFamily: "Metropolis, sans-serif",
+        },
+    },
+    errorText: {
+        color: "red",
+        fontSize: "0.875rem",
+        marginTop: "0.5rem",
+    },
+}));
 
 export default function Login() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState({ email: "", password: "" });
+    const [message, setMessage] = useState("");
+    const [isError, setIsError] = useState(false);
+    const [visible, setVisible] = useState(false);
+    const classes = useStyles();
+    const navigate = useNavigate();
+
+    const validateEmail = (email) => {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email) return "Email is required";
+        if (!emailPattern.test(email)) return "Invalid email format";
+        return "";
+    };
+
+    const validatePassword = (password) => {
+        if (!password) return "Password is required";
+        if (password.length < 8) return "Password must be at least 8 characters";
+        return "";
+    };
+    const handleLogin = async (e) => {
+        e.preventDefault();
+
+        const emailError = validateEmail(email);
+        const passwordError = validatePassword(password);
+
+        setErrors({ email: emailError, password: passwordError });
+
+        if (!emailError && !passwordError) {
+            setLoading(true); // Show loader
+            try {
+                const response = await axios.post(
+                    "http://localhost:1218/api/public/session/adminlogin",
+                    { email, password },
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                if (response.status === 200 && response.data.token) {
+                    const token = response.data.token;
+                    console.log("Token: " + token);
+                    localStorage.setItem("jwtToken", token); // Persistent storage
+                    sessionStorage.setItem("jwtToken", token); // Session-only storage
+                    setIsError(false);
+                    setMessage(response.data.message); // Success message
+                    navigate("/student");
+                } else if (response.data.error) {
+                    setIsError(true);
+                    setMessage(response.data.error); // Error message from backend
+                }
+
+                setVisible(true); // Show message
+            } catch (error) {
+                console.error("There was an error!", error.response || error.message);
+                setIsError(true);
+                setMessage("Login failed. Please try again.");
+                setVisible(true); // Show error message
+            } finally {
+                setLoading(false); // Hide loader
+            }
+        }
+    };
+    const handleCloseMessage = () => {
+        setVisible(false);
+    };
+
+    const handleForgotPasswordLink = () => {
+        setShowSendOtpModal(true);
+    };
     return (
-        <div className="flex w-full flex-col items-center justify-center mx-auto md:h-screen lg:py-0">
-            <div className="w-full bg-gray-50 rounded-lg shadow-xl dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-                <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-                    <h1 className="text-3xl font-bold text-[#ff4848] ">
-                        Login To Your Account
-                    </h1>
-                    <form className="space-y-4 md:space-y-6" action="#">
-                        <div>
-                            <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
-                            <input type="email" name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@company.com" required />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                            <input type="password" name="password" id="password" placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <a href="#" className="text-sm font-medium text-[#ff4848] hover:underline">Forgot password?</a>
-                        </div>
-                        <button type="submit" className="w-full text-[#ff4848] hover:text-white bg-white shadow-md hover:bg-[#ff4848] focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 ease-in duration-200">Sign In</button>
-                    </form>
-                </div>
+        <div className="relative font-metropolis h-auto w-[475px] bg-white p-7 flex flex-col rounded-md shadow-xl">
+            <Message
+                message={message}
+                isError={isError}
+                isVisible={visible}
+                onClose={handleCloseMessage}
+            />
+
+            <div className="w-full">
+                <h1 className="text-3xl font-bold text-[#ff4848]">Login</h1>
+            </div>
+
+            <div className="mt-6 space-y-4">
+                <TextField
+                    fullWidth
+                    id="outlined-email"
+                    label="Email"
+                    variant="outlined"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={classes.root}
+                    error={Boolean(errors.email)}
+                />
+                {errors.email && (
+                    <span className={classes.errorText}>{errors.email}</span>
+                )}
+
+                <TextField
+                    fullWidth
+                    id="outlined-password"
+                    label="Password"
+                    variant="outlined"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={classes.root}
+                    error={Boolean(errors.password)}
+                />
+                {errors.password && (
+                    <span className={classes.errorText}>{errors.password}</span>
+                )}
+            </div>
+
+            <button
+                onClick={handleLogin}
+                className="ease-in duration-200 text-center bg-white text-[#ff4848] rounded-md p-2 font-semibold mt-5 hover:bg-[#ff4848] hover:text-white shadow-lg shadow-slate-200"
+            >
+                Login
+            </button>
+
+            <div className="flex items-center tracking-wide mt-4">
+                <p className="text-sm">Forgot Password?</p>
+                <a
+                    className="text-[#ff7272] hover:text-[#ff5d5d] text-sm font-semibold ml-2"
+                    href="#"
+                    onClick={handleForgotPasswordLink}
+                >
+                    Click here
+                </a>
             </div>
         </div>
     );
